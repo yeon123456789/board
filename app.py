@@ -16,6 +16,12 @@ class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String, nullable=False)
     content = db.Column(db.String, nullable=False)
+    
+class Comment(db.Model):
+    __tablename__="comments"
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.String, nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey('posts.id'), nullable=False) #flask db relationship(One-to-Many Relationship)
 
 db.create_all()
 
@@ -26,7 +32,8 @@ def index():
     # 보여준다.
     # SELECT * FROM posts;
     posts = Post.query.all()
-    return render_template('index.html', posts=reversed(posts))
+    comments = Comment.query.all()
+    return render_template('index.html', posts=reversed(posts), comments=comments)
     
 @app.route("/create")
 def create():
@@ -66,6 +73,17 @@ def delete(id):
     db.session.delete(post)
     # 3. 확정하고 DB에 반영한다. Commit
     db.session.commit()
+    return redirect("/")
+    
+@app.route("/create_comment")
+def create_comment():
+    # Comment 테이블에 입력받은 내용을 저장한다.
+    content = request.args.get('comment_content')
+    post_id = int(request.args.get('post_id'))
+    comment = Comment(content=content, post_id=post_id)
+    db.session.add(comment)
+    db.session.commit()
+    
     return redirect("/")
 
 #app.run(host=os.getenv('IP', '0.0.0.0'),port=int(os.getenv('PORT', 8080)),debug=True)
